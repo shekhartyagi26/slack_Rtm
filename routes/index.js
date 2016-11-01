@@ -3,10 +3,11 @@ var router = express.Router();
 require('node-import');
 imports('config/index');
 
+
 var RtmClient = require('@slack/client').RtmClient;
 var MemoryDataStore = require('@slack/client').MemoryDataStore;
 var CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS;
-var token = config.token;
+var token = process.env.SLACK_API_TOKEN || '';
 var rtm = new RtmClient(token, {
     logLevel: 'error',
     dataStore: new MemoryDataStore()
