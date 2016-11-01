@@ -5,7 +5,7 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
-var routes = require('./routes/index');
+// var routes = require('./routes/index');
 var chatPost = require('./routes/chatPost');
 var cors = require('cors');
 
@@ -24,7 +24,7 @@ app.use(bodyParser.urlencoded());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', routes);
+// app.use('/', routes);
 app.use('/chatPost', chatPost);
 
 /// catch 404 and forwarding to error handler
