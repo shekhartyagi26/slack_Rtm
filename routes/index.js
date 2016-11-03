@@ -1,5 +1,7 @@
 var express = require('express');
+var moment = require('moment');
 var router = express.Router();
+var request = require('request');
 require('node-import');
 imports('config/index');
 
@@ -22,21 +24,55 @@ rtm.on(CLIENT_EVENTS.RTM.RTM_CONNECTION_OPENED, function () {
 
 var RTM_EVENTS = require('@slack/client').RTM_EVENTS;
 // Responds to a message with a 'hello' DM
+var to = '';
+var from = '';
+var reason = '';
 rtm.on(RTM_EVENTS.MESSAGE, function (message) {
     var user = rtm.dataStore.getUserById(message.user)
     var dm = rtm.dataStore.getDMByName(user.name);
-    if (message.text == 'leave' || message.text == 'hello' || message.text == 'help' || message.text == 'hi' || message.text == 'helo' || message.text == 'hey') {
-        if (message.text == 'leave') {
-            rtm.sendMessage('you are not apply leave ' + user.name + '!', dm.id);
-        } else if (message.text == 'hello' || message.text == 'hi' || message.text == 'helo' || message.text == 'hey') {
-            rtm.sendMessage('hello ' + user.name + '!', dm.id);
-        } else if (message.text == 'help') {
-            rtm.sendMessage('These are the different options for you: \n 1. leave', dm.id);
+    var dateFormat = "YYYY-MM-DD";
+    var date = moment(message.text, dateFormat, true).isValid();
+
+    if (message.text == 'hello' || message.text == 'hi' || message.text == 'helo' || message.text == 'hey') {
+        rtm.sendMessage('hello ' + user.name + '!', dm.id);
+    } else if (message.text == 'leave') {
+        rtm.sendMessage('These are the different options for you: \n 1. apply \n 2. status', dm.id);
+    } else if (message.text == 'help') {
+        rtm.sendMessage('These are the different options for you: \n 1. leave', dm.id);
+    } else if (message.text == 'status') {
+        request({
+            url: 'http://excellencemagentoblog.com/slack_dev/hr/attendance/API_HR/api.php', //URL to hit
+            method: 'POST',
+            qs: {"action": 'get_my_leaves', "userslack_id": message.user}
+        }, function (error, response, body) {
+            if (error) {
+                console.log(error);
+            } else {
+                console.log(body)
+                rtm.sendMessage(user.name + '!' + '\n' + body, dm.id);
+            }
+        });
+    } else if (message.text == 'apply' || date == true || from != '' || date == false) {
+        if (message.text == 'apply') {
+            rtm.sendMessage(user.name + '!' + ' can you please provide me the details', dm.id);
+            rtm.sendMessage('to (YYYY-MM-DD) ', dm.id);
+        } else if (date == true && to == '') {
+            to = message.text;
+            rtm.sendMessage('from (YYYY-MM-DD)', dm.id);
+        } else if (date == true && to != '' && from == '') {
+            from = message.text;
+            rtm.sendMessage('reason', dm.id);
+        } else if (from != '' && to != '' && reason == '') {
+            reason = message.text;
+            rtm.sendMessage('your leave application has been submitted', dm.id);
+            to = '';
+            from = '';
+            reason = '';
+        } else if (date == false && to != '' || date == false && from != '') {
+            rtm.sendMessage('invalid format \n use this format (YYYY-MM-DD)', dm.id);
         } else {
-            rtm.sendMessage('invalid data' + user.name + '!', dm.id);
+            rtm.sendMessage("I don't understand" + " " + message.text + ". " + "Please use 'help' to see all options" + '.', dm.id);
         }
-    } else {
-        rtm.sendMessage("I don't understand" + " " + message.text + ". " + "Please use 'help' to see all options" + '.', dm.id);
     }
 });
 
