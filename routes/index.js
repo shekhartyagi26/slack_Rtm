@@ -47,7 +47,7 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
         request({
             url: 'http://excellencemagentoblog.com/slack_dev/hr/attendance/API_HR/api.php', //URL to hit
             method: 'POST',
-            qs: {"action": 'get_my_leaves', "userslack_id": 'U0FJZ0KDM'}
+            qs: {"action": 'get_my_leaves', "userslack_id": message.user}
         }, function (error, response, body) {
             if (error) {
                 console.log(error);
@@ -71,16 +71,18 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
                             Cancelled.push(data1.data.leaves[i].from_date, data1.data.leaves[i].to_date, data1.data.leaves[i].status + '\n')
 // rtm.sendMessage('\n applied leave from ' + data1.data.leaves[i].from_date + ' to ' + data1.data.leaves[i].to_date + '\n' + '*status:' + data1.data.leaves[i].status + '*', dm.id);
                         }
+                        console.log(user.name)
                     }
                     if (Approved != '') {
                         request({
                             url: 'https://slack.com/api/chat.postMessage', //URL to hit
                             method: 'POST',
-                            qs: {"token": process.env.SLACK_API_TOKEN || '', "channel": "D2W9E51FU", "attachments": '[{ "pretext": "text-world", "text":"' + Approved + '", "fallback": "Message Send to Employee","color": "#36a64f"}]'},
+                            qs: {"token": process.env.SLACK_API_TOKEN || '', "channel": message.channel, "attachments": '[{ "pretext": "Approved", "text":"' + Approved + '", "fallback": "Message Send to Employee","color": "#36a64f" , "username":"' + user.name + '"}]'},
                         }, function (error, response, body) {
                             if (error) {
                                 console.log(error);
                             } else {
+                                Approved = [];
                                 console.log(response.statusCode, body);
                             }
                         })
@@ -88,11 +90,12 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
                         request({
                             url: 'https://slack.com/api/chat.postMessage', //URL to hit
                             method: 'POST',
-                            qs: {"token": process.env.SLACK_API_TOKEN || '', "channel": "D2W9E51FU", "attachments": '[{ "pretext": "text-world", "text":"' + Pending + '", "fallback": "Message Send to Employee","color": "#36a64f"}]'},
+                            qs: {"token": process.env.SLACK_API_TOKEN || '', "channel": message.channel, "attachments": '[{ "pretext": "Pending", "text":"' + Pending + '", "fallback": "Message Send to Employee","color": "#36a64f"}]'},
                         }, function (error, response, body) {
                             if (error) {
                                 console.log(error);
                             } else {
+                              Pending = [];
                                 console.log(response.statusCode, body);
                             }
                         })
@@ -101,11 +104,12 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
                         request({
                             url: 'https://slack.com/api/chat.postMessage', //URL to hit
                             method: 'POST',
-                            qs: {"token": process.env.SLACK_API_TOKEN || '', "channel": "D2W9E51FU", "attachments": '[{ "pretext": "text-world", "text":"' + Cancelled + '", "fallback": "Message Send to Employee","color": "#36a64f"}]'},
+                            qs: {"token": process.env.SLACK_API_TOKEN || '', "channel": message.channel, "attachments": '[{ "Cancelled Request": "text-world", "text":"' + Cancelled + '", "fallback": "Message Send to Employee","color": "#36a64f"}]'},
                         }, function (error, response, body) {
                             if (error) {
                                 console.log(error);
                             } else {
+                              Cancelled = '';
                                 console.log(response.statusCode, body);
                             }
                         })
