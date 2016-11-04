@@ -27,12 +27,16 @@ var RTM_EVENTS = require('@slack/client').RTM_EVENTS;
 var to = '';
 var from = '';
 var reason = '';
+var Approved = [];
+var Pending = [];
+var Cancelled = [];
+
+
 rtm.on(RTM_EVENTS.MESSAGE, function (message) {
     var user = rtm.dataStore.getUserById(message.user)
     var dm = rtm.dataStore.getDMByName(user.name);
     var dateFormat = "YYYY-MM-DD";
     var date = moment(message.text, dateFormat, true).isValid();
-
     if (message.text == 'hello' || message.text == 'hi' || message.text == 'helo' || message.text == 'hey') {
         rtm.sendMessage('hello ' + user.name + '!', dm.id);
     } else if (message.text == 'leave') {
@@ -43,16 +47,74 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
         request({
             url: 'http://excellencemagentoblog.com/slack_dev/hr/attendance/API_HR/api.php', //URL to hit
             method: 'POST',
-            qs: {"action": 'get_my_leaves', "userslack_id": message.user}
+            qs: {"action": 'get_my_leaves', "userslack_id": 'U0FJZ0KDM'}
         }, function (error, response, body) {
             if (error) {
                 console.log(error);
             } else {
-                console.log(body)
-                rtm.sendMessage(user.name + '!' + '\n' + body, dm.id);
+                if (body == '') {
+                    rtm.sendMessage("You don't have any upcoming leaves", dm.id);
+                } else {
+                    var data1 = JSON.parse(body);
+                    rtm.sendMessage(user.name + '!', dm.id);
+                    for (i = 0; i < data1.data.leaves.length; i++) {
+                        var leave = data1.data.leaves[i].from_date;
+                        var leave1 = data1.data.leaves[i].to_date;
+                        var leave2 = data1.data.leaves[i].status;
+                        if (data1.data.leaves[i].status == "Approved") {
+                            Approved.push(data1.data.leaves[i].from_date, data1.data.leaves[i].to_date, data1.data.leaves[i].status + '\n')
+// rtm.sendMessage('\n applied leave from ' + data1.data.leaves[i].from_date + ' to ' + data1.data.leaves[i].to_date + '\n' + '*status:' + data1.data.leaves[i].status + '*', dm.id);
+                        } else if (data1.data.leaves[i].status == "Pending") {
+                            Pending.push(data1.data.leaves[i].from_date, data1.data.leaves[i].to_date, data1.data.leaves[i].status + '\n')
+// rtm.sendMessage('\n applied leave from ' + data1.data.leaves[i].from_date + ' to ' + data1.data.leaves[i].to_date + '\n' + '*status:' + data1.data.leaves[i].status + '*', dm.id);
+                        } else if (data1.data.leaves[i].status == "Cancelled Request") {
+                            Cancelled.push(data1.data.leaves[i].from_date, data1.data.leaves[i].to_date, data1.data.leaves[i].status + '\n')
+// rtm.sendMessage('\n applied leave from ' + data1.data.leaves[i].from_date + ' to ' + data1.data.leaves[i].to_date + '\n' + '*status:' + data1.data.leaves[i].status + '*', dm.id);
+                        }
+                    }
+                    if (Approved != '') {
+                        request({
+                            url: 'https://slack.com/api/chat.postMessage', //URL to hit
+                            method: 'POST',
+                            qs: {"token": process.env.SLACK_API_TOKEN || '', "channel": "D2W9E51FU", "attachments": '[{ "pretext": "text-world", "text":"' + Approved + '", "fallback": "Message Send to Employee","color": "#36a64f"}]'},
+                        }, function (error, response, body) {
+                            if (error) {
+                                console.log(error);
+                            } else {
+                                console.log(response.statusCode, body);
+                            }
+                        })
+                    } else if (Pending != '') {
+                        request({
+                            url: 'https://slack.com/api/chat.postMessage', //URL to hit
+                            method: 'POST',
+                            qs: {"token": process.env.SLACK_API_TOKEN || '', "channel": "D2W9E51FU", "attachments": '[{ "pretext": "text-world", "text":"' + Pending + '", "fallback": "Message Send to Employee","color": "#36a64f"}]'},
+                        }, function (error, response, body) {
+                            if (error) {
+                                console.log(error);
+                            } else {
+                                console.log(response.statusCode, body);
+                            }
+                        })
+
+                    } else if (Cancelled != '') {
+                        request({
+                            url: 'https://slack.com/api/chat.postMessage', //URL to hit
+                            method: 'POST',
+                            qs: {"token": process.env.SLACK_API_TOKEN || '', "channel": "D2W9E51FU", "attachments": '[{ "pretext": "text-world", "text":"' + Cancelled + '", "fallback": "Message Send to Employee","color": "#36a64f"}]'},
+                        }, function (error, response, body) {
+                            if (error) {
+                                console.log(error);
+                            } else {
+                                console.log(response.statusCode, body);
+                            }
+                        })
+
+                    }
+                }
             }
         });
-    } else if (message.text == 'apply' || date == true || from != '' || date == false) {
+    } else if (message.text == 'apply' || date == true || from != '') {
         if (message.text == 'apply') {
             rtm.sendMessage(user.name + '!' + ' can you please provide me the details', dm.id);
             rtm.sendMessage('to (YYYY-MM-DD) ', dm.id);
@@ -68,11 +130,11 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
             to = '';
             from = '';
             reason = '';
-        } else if (date == false && to != '' || date == false && from != '') {
-            rtm.sendMessage('invalid format \n use this format (YYYY-MM-DD)', dm.id);
-        } else {
-            rtm.sendMessage("I don't understand" + " " + message.text + ". " + "Please use 'help' to see all options" + '.', dm.id);
         }
+    } else if (date == false && to != '' || date == false && from != '') {
+        rtm.sendMessage('invalid format \n use this format (YYYY-MM-DD)', dm.id);
+    } else {
+        rtm.sendMessage("I don't understand" + " " + message.text + ". " + "Please use 'help' to see all options" + '.', dm.id);
     }
 });
 
