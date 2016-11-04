@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var request = require('request');
-var fruits = [1,2,2];
+var fruits = [122];
 console.log(fruits)
 var attendance = '[{ "pretext": "text world", "text":"'+fruits+'" , "fallback": "Message Send to Employee","color": "#36a64f"}]'
 console.log(attendance)
