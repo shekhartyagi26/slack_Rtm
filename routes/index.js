@@ -32,7 +32,7 @@ var reason = '';
 rtm.on(RTM_EVENTS.MESSAGE, function (message) {
 
     var user = rtm.dataStore.getUserById(message.user)
-    if (user == undefined) {
+    if (user == undefined || dm == undefined) {
         return;
     }
     var dm = rtm.dataStore.getDMByName(user.name);
