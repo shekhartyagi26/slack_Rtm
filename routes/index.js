@@ -7,7 +7,6 @@ var leave_ = require('../service/leaveApply');
 var apply_ = require('../service/leave/apply');
 require('node-import');
 imports('config/index');
-
 var RtmClient = require('@slack/client').RtmClient;
 var MemoryDataStore = require('@slack/client').MemoryDataStore;
 var CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS;
@@ -17,19 +16,16 @@ var rtm = new RtmClient(token, {
     dataStore: new MemoryDataStore()
 });
 rtm.start();
-
 // Wait for the client to connect
 rtm.on(CLIENT_EVENTS.RTM.RTM_CONNECTION_OPENED, function () {
     var user = rtm.dataStore.getUserById(rtm.activeUserId);
     var team = rtm.dataStore.getTeamById(rtm.activeTeamId);
     console.log('Connected to ' + team.name + ' as ' + user.name);
 });
-
 var RTM_EVENTS = require('@slack/client').RTM_EVENTS;
 // Responds to a message with a 'hello' DM
-var to = '';
-var from = '';
-var reason = '';
+
+var to = '', from = '', reason = '';
 
 rtm.on(RTM_EVENTS.MESSAGE, function (message) {
 
@@ -41,7 +37,8 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
     if (dm == undefined) {
         return;
     }
-    var dateFormat = "YYYY-MM-DD";
+//    var dateFormat = "YYYY-MM-DD";
+    var dateFormat = "DD-MM-YYYY";
     var date = moment(message.text, dateFormat, true).isValid();
     if (message.text == 'hello' || message.text == 'hi' || message.text == 'helo' || message.text == 'hey') {
         rtm.sendMessage('hello ' + user.name + '!', dm.id);
@@ -54,11 +51,12 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
         });
     } else if (message.text == 'apply' || date == true || from != '') {
         apply_.apply(rtm, date, message.text, dm, user, function (response) {
-            if (from = '') {
-                from = response;
-            }
+//            if (from == '' && to == '') {
+//                from = response;
+//            } else if (to == '') {
+//                to = response;
+//            }
         });
-
 //        if (message.text == 'apply') {
 //            rtm.sendMessage(user.name + '!' + ' can you please provide me the details', dm.id);
 //            rtm.sendMessage('from (YYYY-MM-DD) ', dm.id);
@@ -101,13 +99,15 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
 //        }
 //   
     } else if (date == false && to != '' && from != '') {
-        rtm.sendMessage('Oops! Unable to understand. Please provide date in proper format (YYYY-MM-DD)', dm.id);
+        rtm.sendMessage('Oops! Unable to understand. Please provide date in proper format (DD-MM-YYYY)', dm.id);
     }
+//    else if (dm && dm.id) {
+//        rtm.sendMessage("I don't understand" + " " + message.text + ". " + "Please use 'help' to see all options" + '.', dm.id);
+//    }
 //    else {
 //        rtm.sendMessage("I don't understand" + " " + message.text + ". " + "Please use 'help' to see all options" + '.', dm.id);
 //    }
 });
-
 //////////////////////when app is started it sends a mesage to shekhar  //////////////////////////
 var RTM_CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS.RTM;
 // you need to wait for the client to fully connect before you can send messages
@@ -116,5 +116,4 @@ rtm.on(RTM_CLIENT_EVENTS.RTM_CONNECTION_OPENED, function () {
     rtm.sendMessage('text : welcome,\n username: shekhar, \n your app is running now', config.shekhar_channelId, function messageSent() {
     });
 });
-
 module.exports = router;
