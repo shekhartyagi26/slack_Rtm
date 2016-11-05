@@ -2,6 +2,8 @@ var express = require('express');
 var moment = require('moment');
 var router = express.Router();
 var request = require('request');
+var request_ = require('../service/request');
+var leave_ = require('../service/leaveApply');
 require('node-import');
 imports('config/index');
 
@@ -27,10 +29,6 @@ var RTM_EVENTS = require('@slack/client').RTM_EVENTS;
 var to = '';
 var from = '';
 var reason = '';
-var Approved = [];
-var Pending = [];
-var cancelled = [];
-
 
 rtm.on(RTM_EVENTS.MESSAGE, function (message) {
 
@@ -48,79 +46,7 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
     } else if (message.text == 'help') {
         rtm.sendMessage('These are the different options for you: \n 1. leave', dm.id);
     } else if (message.text == 'status') {
-        request({
-            url: 'http://excellencemagentoblog.com/slack_dev/hr/attendance/API_HR/api.php', //URL to hit
-            method: 'POST',
-            qs: {"action": 'get_my_leaves', "userslack_id": 'U0FJZ0KDM'}
-        }, function (error, response, body) {
-            if (error) {
-                console.log(error);
-            } else {
-                if (body == '') {
-                    rtm.sendMessage("You don't have any upcoming leaves", dm.id);
-                } else {
-                    var data1 = JSON.parse(body);
-                    rtm.sendMessage(user.name + '!', dm.id);
-                    for (i = 0; i < data1.data.leaves.length; i++) {
-                        var leave = data1.data.leaves[i].from_date;
-                        var leave1 = data1.data.leaves[i].to_date;
-                        var leave2 = data1.data.leaves[i].status;
-                        if (data1.data.leaves[i].status == "Approved") {
-                            // Leave from 3rd Nov to 4th Nov
-                            Approved.push('Leave from: ' + data1.data.leaves[i].from_date + ' to: ' + data1.data.leaves[i].to_date + '\n')
-// rtm.sendMessage('\n applied leave from ' + data1.data.leaves[i].from_date + ' to ' + data1.data.leaves[i].to_date + '\n' + '*status:' + data1.data.leaves[i].status + '*', dm.id);
-                        } else if (data1.data.leaves[i].status == "Pending") {
-                            Pending.push('Leave from: ' + data1.data.leaves[i].from_date + ' to: ' + data1.data.leaves[i].to_date + '\n')
-// rtm.sendMessage('\n applied leave from ' + data1.data.leaves[i].from_date + ' to ' + data1.data.leaves[i].to_date + '\n' + '*status:' + data1.data.leaves[i].status + '*', dm.id);
-                        } else if (data1.data.leaves[i].status == "Cancelled Request") {
-                            cancelled.push('Leave from: ' + data1.data.leaves[i].from_date + ' to: ' + data1.data.leaves[i].to_date + '\n')
-                        }
-                    }
-                    if (Approved != '') {
-                        request({
-                            url: 'https://slack.com/api/chat.postMessage', //URL to hit
-                            method: 'POST',
-                            qs: {"token": process.env.SLACK_API_TOKEN || '', "channel": message.channel, "attachments": '[{ "pretext": "Status : Approved", "text":"' + Approved + '", "fallback": "Message Send to Employee","color": "#36a64f" }]'},
-                        }, function (error, response, body) {
-                            if (error) {
-                                console.log(error);
-                            } else {
-                                Approved = [];
-                                console.log(response.statusCode, body);
-                            }
-                        })
-                    }
-                    if (Pending != '') {
-                        request({
-                            url: 'https://slack.com/api/chat.postMessage', //URL to hit
-                            method: 'POST',
-                            qs: {"token": process.env.SLACK_API_TOKEN || '', "channel": message.channel, "attachments": '[{ "pretext": "Status : Pending", "text":"' + Pending + '", "fallback": "Message Send to Employee","color": "#AF2111"}]'},
-                        }, function (error, response, body) {
-                            if (error) {
-                                console.log(error);
-                            } else {
-                                Pending = [];
-                                console.log(response.statusCode, body);
-                            }
-                        })
-                    }
-                    if (cancelled != '') {
-                        request({
-                            url: 'https://slack.com/api/chat.postMessage', //URL to hit
-                            method: 'POST',
-                            qs: {"token": process.env.SLACK_API_TOKEN || '', "channel": message.channel, "attachments": '[{ "pretext": "Status : Cancelled Request", "text":"' + cancelled + '", "fallback": "Message Send to Employee","color": "#F2801D"}]'},
-                        }, function (error, response, body) {
-                            if (error) {
-                                console.log(error);
-                            } else {
-                                Cancelled = '';
-                                console.log(response.statusCode, body);
-                            }
-                        })
-
-                    }
-                }
-            }
+        request_.request(message, function (req, response, msg) {
         });
     } else if (message.text == 'apply' || date == true || from != '') {
         if (message.text == 'apply') {
@@ -134,14 +60,36 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
             rtm.sendMessage('reason', dm.id);
         } else if (from != '' && to != '' && reason == '') {
             reason = message.text;
-            rtm.sendMessage('your leave application has been submitted', dm.id);
+            var id = message.user;
+            var myFrom = from.substring(8, 10);
+            var myTo = to.substring(8, 10);
+            var num = myTo * 1 - myFrom * 1;
+            var number_of_day = num + 1;
+            leave_.leaveApply(id, from, to, number_of_day, reason, function (req, response, message) {
+                console.log('||||||||||||||||||||||||||||||||');
+                console.log(response);
+                console.log('||||||||||||||||||||||||||||||||');
+                console.log(response.error);
+                if (response.error == 0) {
+                    console.log(response.data);
+                    console.log('------------------');
+                    console.log(response.data.message);
+                    rtm.sendMessage('your leave application has been submitted', dm.id);
+                }
+//                console.log(req);
+//                console.log('+++++++++++++++++++');
+//                console.log(response);
+//                console.log('+++++++++++++++++++');
+//                console.log(msg);
+            });
+
             to = '';
             from = '';
             reason = '';
         }
     } else if (date == false && to != '' || date == false && from != '') {
         rtm.sendMessage('invalid format \n use this format (YYYY-MM-DD)', dm.id);
-    } else {
+    } else if (dm && dm.id) {
         rtm.sendMessage("I don't understand" + " " + message.text + ". " + "Please use 'help' to see all options" + '.', dm.id);
     }
 });
