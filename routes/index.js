@@ -4,6 +4,7 @@ var router = express.Router();
 var request = require('request');
 const request_ = require('../service/request');
 var leave_ = require('../service/leaveApply');
+var apply_ = require('../service/leave/apply');
 require('node-import');
 imports('config/index');
 
@@ -32,7 +33,7 @@ var reason = '';
 
 rtm.on(RTM_EVENTS.MESSAGE, function (message) {
 
-    var user = rtm.dataStore.getUserById(message.user)
+    var user = rtm.dataStore.getUserById(message.user);
     if (user == undefined) {
         return;
     }
@@ -52,38 +53,59 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
         request_.request(message, function (req, response, msg) {
         });
     } else if (message.text == 'apply' || date == true || from != '') {
-        if (message.text == 'apply') {
-            rtm.sendMessage(user.name + '!' + ' can you please provide me the details', dm.id);
-            rtm.sendMessage('to (YYYY-MM-DD) ', dm.id);
-        } else if (date == true && to == '') {
-            to = message.text;
-            rtm.sendMessage('from (YYYY-MM-DD)', dm.id);
-        } else if (date == true && to != '' && from == '') {
-            from = message.text;
-            rtm.sendMessage('reason', dm.id);
-        } else if (from != '' && to != '' && reason == '') {
-            reason = message.text;
-            var id = message.user;
-            var myFrom = from.substring(8, 10);
-            var myTo = to.substring(8, 10);
-            var num = myTo * 1 - myFrom * 1;
-            var number_of_day = num + 1;
-            leave_.leaveApply(id, from, to, number_of_day, reason, function (response) {
-                if (response == 0) {
-                    rtm.sendMessage('your leave application has been submitted', dm.id);
-                } else {
-                    rtm.sendMessage('your leave application has not been submitted', dm.id);
-                }
-            });
-            to = '';
-            from = '';
-            reason = '';
-        }
-    } else if (date == false && to != '' || date == false && from != '') {
-        rtm.sendMessage('invalid format \n use this format (YYYY-MM-DD)', dm.id);
-    } else if (dm && dm.id) {
-        rtm.sendMessage("I don't understand" + " " + message.text + ". " + "Please use 'help' to see all options" + '.', dm.id);
+        apply_.apply(rtm, date, message.text, dm, user, function (response) {
+            if (from = '') {
+                from = response;
+            }
+        });
+
+//        if (message.text == 'apply') {
+//            rtm.sendMessage(user.name + '!' + ' can you please provide me the details', dm.id);
+//            rtm.sendMessage('from (YYYY-MM-DD) ', dm.id);
+//        } else if (date == true && from == '') {
+//            from = message.text;
+//            rtm.sendMessage('to (YYYY-MM-DD)', dm.id);
+//        } else if (date == true && from != '' && to == '') {
+//            to = message.text;
+//            var myDay = moment(to).isAfter(from);
+//            if (myDay == true) {
+//                rtm.sendMessage('reason', dm.id);
+//            } else {
+//                from = '';
+//                to = '';
+//                rtm.sendMessage('Invalid days. So enter again from (YYYY-MM-DD) ', dm.id);
+//            }
+//        } else if (from != '' && to != '' && reason == '') {
+//            rtm.sendMessage('Please wait...', dm.id);
+//            reason = message.text;
+//            var id = message.user;
+//            var fromDate = moment(from, 'YYYY-MM-DD'); // format in which you have the date
+//            var toDate = moment(to, 'YYYY-MM-DD');     // format in which you have the date
+//            /* using diff */
+//            var duration = toDate.diff(fromDate, 'days');
+//            if (duration > 0) {
+//                var number_of_day = duration + 1;
+//                leave_.leaveApply(id, from, to, number_of_day, reason, function (response) {
+//                    if (response == 0) {
+//                        rtm.sendMessage('Your leave has been submitted approval!', dm.id);
+//                    } else {
+//                        rtm.sendMessage('Oops! Some problem occurred. We are looking into it. In the mean time you can use HR system to apply your leave', dm.id);
+//                    }
+//                });
+//                to = '';
+//                from = '';
+//                reason = '';
+//            } else {
+//                rtm.sendMessage('Invalid Days. So please try again', dm.id);
+//            }
+//        }
+//   
+    } else if (date == false && to != '' && from != '') {
+        rtm.sendMessage('Oops! Unable to understand. Please provide date in proper format (YYYY-MM-DD)', dm.id);
     }
+//    else {
+//        rtm.sendMessage("I don't understand" + " " + message.text + ". " + "Please use 'help' to see all options" + '.', dm.id);
+//    }
 });
 
 //////////////////////when app is started it sends a mesage to shekhar  //////////////////////////
