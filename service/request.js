@@ -1,10 +1,11 @@
 var request = require('request');
-var Approved = [];
-var Pending = [];
-var cancelled = [];
+
 const request_send = require('../service/request_send');
 
 exports.request = function (message) {
+    var Approved = [];
+    var Pending = [];
+    var cancelled = [];
     request({
         url: 'http://excellencemagentoblog.com/slack_dev/hr/attendance/API_HR/api.php', //URL to hit
         method: 'POST',
@@ -42,5 +43,3 @@ exports.request = function (message) {
         }
     });
 }
-
-Approved.toString().replace(/,/g, ' ')
