@@ -37,6 +37,9 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
         return;
     }
     var dm = rtm.dataStore.getDMByName(user.name);
+    if (dm == undefined) {
+        return;
+    }
     var dateFormat = "YYYY-MM-DD";
     var date = moment(message.text, dateFormat, true).isValid();
     if (message.text == 'hello' || message.text == 'hi' || message.text == 'helo' || message.text == 'hey') {
@@ -65,24 +68,13 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
             var myTo = to.substring(8, 10);
             var num = myTo * 1 - myFrom * 1;
             var number_of_day = num + 1;
-            leave_.leaveApply(id, from, to, number_of_day, reason, function (req, response, message) {
-                console.log('||||||||||||||||||||||||||||||||');
-                console.log(response);
-                console.log('||||||||||||||||||||||||||||||||');
-                console.log(response.error);
-                if (response.error == 0) {
-                    console.log(response.data);
-                    console.log('------------------');
-                    console.log(response.data.message);
+            leave_.leaveApply(id, from, to, number_of_day, reason, function (response) {
+                if (response == 0) {
                     rtm.sendMessage('your leave application has been submitted', dm.id);
+                } else {
+                    rtm.sendMessage('your leave application has not been submitted', dm.id);
                 }
-//                console.log(req);
-//                console.log('+++++++++++++++++++');
-//                console.log(response);
-//                console.log('+++++++++++++++++++');
-//                console.log(msg);
             });
-
             to = '';
             from = '';
             reason = '';
