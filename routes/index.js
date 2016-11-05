@@ -2,7 +2,7 @@ var express = require('express');
 var moment = require('moment');
 var router = express.Router();
 var request = require('request');
-const request_ = require('../service/request');
+const leave_status = require('../service/leave/status');
 require('node-import');
 imports('config/index');
 
@@ -48,7 +48,7 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
     } else if (message.text == 'help') {
         rtm.sendMessage('These are the different options for you: \n 1. leave', dm.id);
     } else if (message.text == 'status') {
-        request_.request(message, function (req, response, msg) {
+        leave_status.fetch(message, dm, function (req, response, msg) {
         });
     } else if (message.text == 'apply' || date == true || from != '') {
         if (message.text == 'apply') {
