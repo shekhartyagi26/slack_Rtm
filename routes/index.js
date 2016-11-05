@@ -32,10 +32,13 @@ var reason = '';
 rtm.on(RTM_EVENTS.MESSAGE, function (message) {
 
     var user = rtm.dataStore.getUserById(message.user)
-    if (user == undefined || dm == undefined) {
+    if (user == undefined) {
         return;
     }
     var dm = rtm.dataStore.getDMByName(user.name);
+    if (dm == undefined) {
+        return;
+    }
     var dateFormat = "YYYY-MM-DD";
     var date = moment(message.text, dateFormat, true).isValid();
     if (message.text == 'hello' || message.text == 'hi' || message.text == 'helo' || message.text == 'hey') {
