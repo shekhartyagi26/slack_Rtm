@@ -15,10 +15,9 @@ exports.request_send = function (message, Approved, Pending, cancelled, callback
                 Approved = [];
                 // callback(Approved)
             }
-        })
+        });
     }
     if (Pending != '') {
-        console.log(Pending.toString())
         request({
             url: 'https://slack.com/api/chat.postMessage', //URL to hit
             method: 'POST',
@@ -28,10 +27,9 @@ exports.request_send = function (message, Approved, Pending, cancelled, callback
                 console.log(error);
             } else {
                 Pending = [];
-
                 // callback(Pending)
             }
-        })
+        });
     }
     if (cancelled != '') {
         request({
@@ -45,6 +43,6 @@ exports.request_send = function (message, Approved, Pending, cancelled, callback
                 cancelled = '';
                 // callback(cancelled)
             }
-        })
+        });
     }
-}
+};

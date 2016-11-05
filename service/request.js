@@ -36,11 +36,9 @@ exports.request = function (message) {
                     request_send.request_send(message, Approved, Pending, cancelled, function (error, response, msg) {
                     });
                 } else {
-                    console.log('invalid api response')
+                    console.log('invalid api response');
                 }
             }
         }
     });
-}
-
-Approved.toString().replace(/,/g, ' ')
+};
