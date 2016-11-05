@@ -3,6 +3,7 @@ var moment = require('moment');
 var router = express.Router();
 var request = require('request');
 const request_ = require('../service/request');
+var leave_ = require('../service/leaveApply');
 require('node-import');
 imports('config/index');
 
@@ -62,7 +63,18 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
             rtm.sendMessage('reason', dm.id);
         } else if (from != '' && to != '' && reason == '') {
             reason = message.text;
-            rtm.sendMessage('your leave application has been submitted', dm.id);
+            var id = message.user;
+            var myFrom = from.substring(8, 10);
+            var myTo = to.substring(8, 10);
+            var num = myTo * 1 - myFrom * 1;
+            var number_of_day = num + 1;
+            leave_.leaveApply(id, from, to, number_of_day, reason, function (response) {
+                if (response == 0) {
+                    rtm.sendMessage('your leave application has been submitted', dm.id);
+                } else {
+                    rtm.sendMessage('your leave application has not been submitted', dm.id);
+                }
+            });
             to = '';
             from = '';
             reason = '';
