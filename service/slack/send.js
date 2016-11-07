@@ -9,7 +9,7 @@ exports.message = function (message, paramaters, message_data, url, callback) {
         if (error) {
             console.log(error);
         } else {
-            message_data = [];
+            message_data = '';
             callback(body)
         }
     });

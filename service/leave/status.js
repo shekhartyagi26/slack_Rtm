@@ -5,9 +5,9 @@ require('node-import');
 imports('config/index');
 
 exports.fetch = function (message, dm) {
-    var approved_message = [];
-    var pending_message = [];
-    var cancelled_message = [];
+    var approved_message = '';
+    var pending_message = '';
+    var cancelled_message = '';
     request({
         url: config.url, //URL to hit
         method: 'POST',
