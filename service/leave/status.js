@@ -27,6 +27,7 @@ exports.fetch = function (message, dm) {
                         var leave2 = data1.data.leaves[i].status;
                         if (data1.data.leaves[i].status == "Approved") {
                             approved_message = approved_message + 'Leave from: ' + data1.data.leaves[i].from_date + ' to: ' + data1.data.leaves[i].to_date + '\n';
+                            console.log(approved_message)
                             // rtm.sendMessage('\n applied leave from ' + data1.data.leaves[i].from_date + ' to ' + data1.data.leaves[i].to_date + '\n' + '*status:' + data1.data.leaves[i].status + '*', dm.id);
                         } else if (data1.data.leaves[i].status == "Pending") {
                             pending_message = pending_message + 'Leave from: ' + data1.data.leaves[i].from_date + ' to: ' + data1.data.leaves[i].to_date + '\n';
