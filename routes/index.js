@@ -4,8 +4,8 @@ var router = express.Router();
 var request = require('request');
 const leave_status = require('../service/leave/status');
 // const request_ = require('../service/request');
-var leave_ = require('../service/leaveApply');
-var apply_ = require('../service/leave/apply');
+// var leave_ = require('../service/leaveApply');
+// var apply_ = require('../service/leave/apply');
 require('node-import');
 imports('config/index');
 var RtmClient = require('@slack/client').RtmClient;
@@ -68,60 +68,71 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
     } else if (message.text == 'status') {
         leave_status.fetch(message, dm, function (req, response, msg) {
         });
-    } else if (message.text == 'apply' || date == true || from != '' ) {
-            var id = message.user;
-            exists(id);
-            function exists(id) {
-                var check_session = session[id] ? true : false;
-                if (check_session == false) {
-                    console.log(check_session)
-                    start(id);
-                    rtm.sendMessage(user.name + '!' + ' can you please provide me the details \n to (YYYY-MM-DD) ', dm.id);
-                } else if (check_session == true && date == true || date == false) {
-                    if (date == true && to == '') {
-                        touch(id);
-                        to = message.text;
-                        set(id, 'to', message.text);
+    } else if (message.text == 'apply' || date == true || to != '') {
+        var id = message.user;
+        exists(id);
 
-                        rtm.sendMessage('from (YYYY-MM-DD)', dm.id);
-                    } else if (date == true && to != '' && from == '') {
-                        from = message.text;
-                        touch(id);
-                        set(id, 'from', message.text);
-                        rtm.sendMessage('reason', dm.id);
-                    } else if (from != '' && to != '' && reason == '') {
-                        touch(id);
-                        reason = message.text;
-                        set(id, 'reason', message.text);
-                        get(id, 'to',function(key , value){
-                            console.log({key:key,value:value})
-                        });
-                        get(id, 'from',function(key , value){
-                            console.log({key:key,value:value})
-                        });
-                        get(id, 'reason',function(key , value){
-                            console.log({key:key,value:value})
-                        });
-                        // get(id, to);
-                        
-                        rtm.sendMessage('your leave application has been submitted', dm.id);
-                        to = '';
-                        from = '';
-                        reason = '';
-                    }
-
-                }
-            }
     } else if (date == false && to != '' || date == false && from != '') {
         rtm.sendMessage('invalid format \n use this format (YYYY-MM-DD)', dm.id);
     } else if (dm && dm.id) {
         rtm.sendMessage("I don't understand" + " " + message.text + ". " + "Please use 'help' to see all options" + '.', dm.id);
     }
-    function get(id, key , callback) {
+
+
+    function exists(id) {
+        var check_session = session[id] ? true : false;
+        if (check_session == false) {
+            start(id);
+            rtm.sendMessage(user.name + '!' + ' can you please provide me the details \n from (YYYY-MM-DD) ', dm.id);
+        } else if (check_session == true && date == true || date == false) {
+            if (date == true && from == '') {
+                touch(id);
+                from = message.text;
+                set(id, 'from', message.text);
+                rtm.sendMessage('to (YYYY-MM-DD)', dm.id);
+            } else if (date == true && from != '' && to == '') {
+                to = message.text;
+                touch(id);
+                set(id, 'to', message.text);
+                rtm.sendMessage('reason', dm.id);
+            } else if (from != '' && to != '' && reason == '') {
+                touch(id);
+                reason = message.text;
+                set(id, 'reason', message.text);
+                var fromDate = moment(from, "YYYY-MM-DD");
+                var toDate = moment(get(id, 'to'), "YYYY-MM-DD");
+                var duration = toDate.diff(get(id, 'from'), 'days');
+                var number_of_day = duration + 1;
+                if (number_of_day > 0) {
+                    request({
+                        url: config.url, //URL to hit
+                        method: 'GET',
+                        qs: {"action": 'apply_leave', "userslack_id": message.user, "from_date": from,
+                            "to_date": to, "no_of_days": number_of_day, "reason": reason}
+                    }, function (error, response, body) {
+                        if (error) {
+                            callback(error);
+                        } else {
+                            destory(id);
+                            rtm.sendMessage('your leave application has been submitted', dm.id);
+                            to = '';
+                            from = '';
+                            reason = '';
+                        }
+                    });
+                } else {
+                    rtm.sendMessage('you must have to apply leave for more than one day !', dm.id);
+                    destory(id);
+                }
+            }
+        }
+    }
+    function get(id, key, callback) {
         if (session[id]) {
-            callback(key,session[id].key);
+            return session[id][key]
         } else {
 //doesnt exist throw error
+            return false
         }
     }
 
@@ -139,7 +150,7 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
 
     function set(id, key, value) {
         if (session[id]) {
-            session[id].key = value;
+            session[id][key] = value;
         } else {
 //doesnt exist throw error
         }
