@@ -7,7 +7,6 @@ const leave_status = require('../service/leave/status');
 // var leave_ = require('../service/leaveApply');
 
 var apply_ = require('../service/leave/apply');
-console.log(apply_)
 require('node-import');
 imports('config/index');
 var RtmClient = require('@slack/client').RtmClient;
@@ -50,6 +49,7 @@ var session = {};
 
 
 rtm.on(RTM_EVENTS.MESSAGE, function (message) {
+
     var time = moment().format('h:mm:ss');
     var user = rtm.dataStore.getUserById(message.user)
     if (user == undefined) {
@@ -59,7 +59,9 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
     if (dm == undefined) {
         return;
     }
-    var dateFormat = "YYYY-MM-DD";
+
+//    var dateFormat = "YYYY-MM-DD";
+    var dateFormat = "DD-MM-YYYY";
     var date = moment(message.text, dateFormat, true).isValid();
     if (message.text == 'hello' || message.text == 'hi' || message.text == 'helo' || message.text == 'hey') {
         rtm.sendMessage('hello ' + user.name + '!', dm.id);
@@ -68,21 +70,23 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
     } else if (message.text == 'help') {
         rtm.sendMessage('These are the different options for you: \n 1. leave', dm.id);
     } else if (message.text == 'status') {
-        leave_status.fetch(message, dm,rtm , function (req, response, msg) {
+        leave_status.fetch(message, dm, rtm, function (req, response, msg) {
         });
-    } else if (message.text == 'apply' || date == true || to != '') {
+//    } else if (message.text == 'apply' || date == true || to != '' || from != '') {
+    } else if (message.text == 'apply' || date == true || date == false) {
         var id = message.user;
-        apply_.apply(message, dm, id,session,date,time,rtm,user,from,to,reason, function (from_date, to_date, msg) {
-            from =from_date;
+        //        apply_.apply(message, dm, id, session, date, time, rtm, user, from, to, reason, function (from_date, to_date, msg) {
+        apply_.apply(message, dm, id, session, date, time, rtm, user, function (from_date, to_date, msg) {
+            from = from_date;
             to = to_date;
         });
         // exists(id);
-    } else if (date == false && to != '' || date == false && from != '') {
-        rtm.sendMessage('invalid format \n use this format (YYYY-MM-DD)', dm.id);
+    } else if (date == false && to == '' || date == false && from == '') {
+//        rtm.sendMessage('invalid format \n use this format (DD-MM-YYYY)', dm.id);
+        rtm.sendMessage('Oops! Unable to understand. Please provide date in proper format (YYYY-MM-DD)', dm.id);
     } else if (dm && dm.id) {
         rtm.sendMessage("I don't understand" + " " + message.text + ". " + "Please use 'help' to see all options" + '.', dm.id);
     }
-
 
 //     function exists(id) {
 //         var check_session = session[id] ? true : false;
