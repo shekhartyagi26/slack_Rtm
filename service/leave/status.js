@@ -4,7 +4,7 @@ const request_send = require('../slack/send');
 require('node-import');
 imports('config/index');
 
-exports.fetch = function (message, dm) {
+exports.fetch = function (message, dm,rtm) {
     var approved_message = '';
     var pending_message = '';
     var cancelled_message = '';
