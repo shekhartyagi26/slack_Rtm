@@ -16,7 +16,6 @@ var rtm = new RtmClient(token, {
 });
 rtm.start();
 
-
 // Wait for the client to connect
 rtm.on(CLIENT_EVENTS.RTM.RTM_CONNECTION_OPENED, function () {
     var user = rtm.dataStore.getUserById(rtm.activeUserId);
@@ -26,8 +25,7 @@ rtm.on(CLIENT_EVENTS.RTM.RTM_CONNECTION_OPENED, function () {
 var RTM_EVENTS = require('@slack/client').RTM_EVENTS;
 // Responds to a message with a 'hello' DM
 
-
-//////////////////////when app is started it sends a mesage to shekhar  //////////////////////////
+//*********************** when app is started it sends a mesage to shekhar ***********************
 var RTM_CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS.RTM;
 // you need to wait for the client to fully connect before you can send messages
 rtm.on(RTM_CLIENT_EVENTS.RTM_CONNECTION_OPENED, function () {
@@ -36,16 +34,7 @@ rtm.on(RTM_CLIENT_EVENTS.RTM_CONNECTION_OPENED, function () {
     });
 });
 
-
-var RTM_EVENTS = require('@slack/client').RTM_EVENTS;
-// Responds to a message with a 'hello' DM
-var to = '';
-var from = '';
-var reason = '';
-//var session = {};
-
 rtm.on(RTM_EVENTS.MESSAGE, function (message) {
-
     var time = moment().format('h:mm:ss');
     var user = rtm.dataStore.getUserById(message.user)
     if (user == undefined) {
@@ -55,7 +44,6 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
     if (dm == undefined) {
         return;
     }
-
     var dateFormat = "DD-MM-YYYY";
     var date = moment(message.text, dateFormat, true).isValid();
     if (message.text == 'hello' || message.text == 'hi' || message.text == 'helo' || message.text == 'hey') {
@@ -69,14 +57,7 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
         });
     } else if (message.text == 'apply' || date == true || date == false) {
         var id = message.user;
-        apply_.apply(message, dm, id, date, time, rtm, user, function (from_date, to_date, msg) {
-//        apply_.apply(message, dm, id, date, time, rtm, user, function (from_date, to_date, msg) {
-            from = from_date;
-            to = to_date;
-        });
-        // exists(id);
-    } else if (date == false && to == '' || date == false && from == '') {
-        rtm.sendMessage('Oops! Unable to understand. Please provide date in proper format (YYYY-MM-DD)', dm.id);
+        apply_.apply(message, dm, id, date, time, rtm, user);
     } else if (dm && dm.id) {
         rtm.sendMessage("I don't understand" + " " + message.text + ". " + "Please use 'help' to see all options" + '.', dm.id);
     }

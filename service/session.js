@@ -1,7 +1,7 @@
-//var session = {};
+var session = {};
 
 exports.mySession = function (cb) {
-    var session = {};
+//    session = {};
     cb(session);
 };
 
@@ -42,7 +42,7 @@ exports.start = function (session, id, time) {
     }, 5000000);
 };
 
-exports, destory = function (session, id) {
+exports.destory = function (session, id) {
     session[id] = {};
     delete session[id];
 };
