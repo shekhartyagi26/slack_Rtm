@@ -2,18 +2,19 @@ var express = require('express');
 var moment = require('moment');
 var router = express.Router();
 const leave_status = require('../service/leave/status');
-
-var apply_ = require('../service/leave/apply');
+var leave = require('../service/leave/apply');
 require('node-import');
 imports('config/index');
 var RtmClient = require('@slack/client').RtmClient;
 var MemoryDataStore = require('@slack/client').MemoryDataStore;
 var CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS;
 var token = process.env.SLACK_API_TOKEN || '';
+
 var rtm = new RtmClient(token, {
     logLevel: 'error',
     dataStore: new MemoryDataStore()
 });
+
 rtm.start();
 
 // Wait for the client to connect
@@ -22,17 +23,8 @@ rtm.on(CLIENT_EVENTS.RTM.RTM_CONNECTION_OPENED, function () {
     var team = rtm.dataStore.getTeamById(rtm.activeTeamId);
     console.log('Connected to ' + team.name + ' as ' + user.name);
 });
-var RTM_EVENTS = require('@slack/client').RTM_EVENTS;
-// Responds to a message with a 'hello' DM
 
-//*********************** when app is started it sends a mesage to shekhar ***********************
-var RTM_CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS.RTM;
-// you need to wait for the client to fully connect before you can send messages
-rtm.on(RTM_CLIENT_EVENTS.RTM_CONNECTION_OPENED, function () {
-// This will send the message 'this is a test message' to the channel identified by id 'C0CHZA86Q'
-    rtm.sendMessage('text : welcome,\n username: shekhar, \n your app is running now', config.shekhar_channelId, function messageSent() {
-    });
-});
+var RTM_EVENTS = require('@slack/client').RTM_EVENTS;
 
 rtm.on(RTM_EVENTS.MESSAGE, function (message) {
     var time = moment().format('h:mm:ss');
@@ -57,7 +49,7 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
         });
     } else if (message.text == 'apply' || date == true || date == false) {
         var id = message.user;
-        apply_.apply(message, dm, id, date, time, rtm, user);
+        leave._apply(message, dm, id, date, time, rtm, user);
     } else if (dm && dm.id) {
         rtm.sendMessage("I don't understand" + " " + message.text + ". " + "Please use 'help' to see all options" + '.', dm.id);
     }

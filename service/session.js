@@ -1,11 +1,10 @@
 var session = {};
 
-exports.mySession = function (cb) {
-//    session = {};
+exports.exists = function (cb) {
     cb(session);
 };
 
-exports.get = function (session, id, key, callback) {
+exports.get = function (id, key, callback) {
     if (session[id]) {
         return session[id][key];
     } else {
@@ -14,7 +13,7 @@ exports.get = function (session, id, key, callback) {
     }
 };
 
-exports.touch = function (session, id, time) {
+exports.touch = function (id, time) {
     if (session[id]) {
         session[id].start = time;
         clearTimeout(session[id].timeout);
@@ -26,7 +25,7 @@ exports.touch = function (session, id, time) {
     }
 };
 
-exports.set = function (session, id, key, value) {
+exports.set = function (id, key, value) {
     if (session[id]) {
         session[id][key] = value;
     } else {
@@ -34,7 +33,7 @@ exports.set = function (session, id, key, value) {
     }
 };
 
-exports.start = function (session, id, time) {
+exports.start = function (id, time) {
     session[id] = {};
     session[id].start = time;
     session[id].timeout = setTimeout(function () {
@@ -42,7 +41,7 @@ exports.start = function (session, id, time) {
     }, 5000000);
 };
 
-exports.destory = function (session, id) {
+exports.destory = function (id) {
     session[id] = {};
     delete session[id];
 };
