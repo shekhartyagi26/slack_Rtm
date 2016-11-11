@@ -1,62 +1,64 @@
 var leave_ = require('../leaveApply');
+var to_session = require('../session');
 var moment = require('moment');
 require('node-import');
 imports('config/index');
 
-var from = '', to = '', reason = '';
-
-exports.apply = function (rtm, date, message, dm, user, callback) {
-    console.log('apply chala');
-    console.log(from + "::::" + to + "::::" + reason);
-    if (message == 'apply') {
-        rtm.sendMessage(user.name + '!' + ' can you please provide me the details', dm.id);
-        rtm.sendMessage('from (DD-MM-YYYY) ', dm.id);
-    } else if (date == true && from == '') {
-        from = message;
-        rtm.sendMessage('to (DD-MM-YYYY)', dm.id);
-    } else if (date == true && from != '' && to == '') {
-        to = message;
-        var fromTimeStamp = moment(from, "DD-MM-YYYY").unix();
-        var toTimeStamp = moment(to, "DD-MM-YYYY").unix();
-        if (toTimeStamp > fromTimeStamp) {
-            rtm.sendMessage('reason', dm.id);
-        } else {
-            from = '';
-            to = '';
-            rtm.sendMessage('Invalid days. So enter again from (DD-MM-YYYY) ', dm.id);
-        }
-    } else if (from != '' && to != '' && reason == '') {
-        rtm.sendMessage('Please wait...', dm.id);
-        reason = message;
-        var id = message.user;
-        var fromDate = moment(from, "DD-MM-YYYY"); // format in which you have the date
-        var toDate = moment(to, "DD-MM-YYYY");     // format in which you have the date
-
-        /* using diff */
-        var duration = toDate.diff(fromDate, 'days');
-
-        if (duration > 0) {
-            var number_of_day = duration + 1;
-//            var dateTimeFrom = moment(from, "MM-DD-YYYY");
-            var myFrom = moment(fromDate).format("YYYY-MM-DD");
-//            var dateTimeTo = moment(to, "MM-DD-YYYY");
-            var myTo = moment(toDate).format("YYYY-MM-DD");
-            console.log('-=-------====');
-            console.log(myFrom);
-            console.log(myTo);
-            leave_.leaveApply(id, myFrom, myTo, number_of_day, reason, function (response) {
-                if (response == 0) {
-                    rtm.sendMessage('Your leave has been submitted approval!', dm.id);
+exports._apply = function (message, dm, id, date, time, rtm, user, callback) {
+    to_session.exists(function (res) {
+        var check_session = res[id] ? true : false;
+        if (!check_session) {
+            to_session.start(id, time, callback);
+            to_session.set(id, 'command', 'from');
+            rtm.sendMessage(user.name + '!' + ' can you please provide me the details \n from (DD-MM-YYYY) ', dm.id);
+        } else if (check_session) {
+            var result = to_session.get(id, 'command');
+            if (result == 'from') {
+                if (date) {
+                    to_session.touch(id);
+                    to_session.set(id, 'from', message.text);
+                    to_session.set(id, 'command', 'to');
+                    rtm.sendMessage('to (DD-MM-YYYY)', dm.id);
                 } else {
-                    rtm.sendMessage('Oops! Some problem occurred. We are looking into it. In the mean time you can use HR system to apply your leave', dm.id);
+                    rtm.sendMessage('Invalid Date. So please enter a valid date again in proper format from (DD-MM-YYYY)', dm.id);
                 }
-            });
-            to = '';
-            from = '';
-            reason = '';
-        } else {
-            rtm.sendMessage('Invalid Days. So please try again', dm.id);
+            } else if (result == 'to') {
+                if (date) {
+                    to_session.touch(id);
+                    to_session.set(id, 'to', message.text);
+                    to_session.set(id, 'command', 'reason');
+                    rtm.sendMessage('reason', dm.id);
+                } else {
+                    rtm.sendMessage('Invalid Date. So please enter a valid date again in proper format to (DD-MM-YYYY)', dm.id);
+                }
+            } else if (result == 'reason') {
+                var getFrom = to_session.get(id, 'from');
+                var getTo = to_session.get(id, 'to');
+                to_session.touch(id);
+                var reason = message.text;
+                to_session.set(id, 'reason', message.text);
+                rtm.sendMessage('Please wait...', dm.id);
+                var fromDate = moment(getFrom, "DD-MM-YYYY");
+                var toDate = moment(getTo, "DD-MM-YYYY");
+                var duration = toDate.diff(fromDate, 'days');
+                var number_of_day = duration + 1;
+                if (number_of_day > 0) {
+                    var myFromDate = moment(getFrom, 'DD-MM-YYYY').format('YYYY-MM-DD');
+                    var myToDate = moment(getTo, 'DD-MM-YYYY').format('YYYY-MM-DD');
+                    leave_.leaveApply(id, myFromDate, myToDate, number_of_day, reason, function (status) {
+                        if (status == 0) {
+                            to_session.destory(id);
+                            rtm.sendMessage('Your leave has been submitted approval!', dm.id);
+                        } else {
+                            to_session.destory(id);
+                            rtm.sendMessage('Oops! Some problem occurred. We are looking into it. In the mean time you can use HR system to apply your leave', dm.id);
+                        }
+                    });
+                } else {
+                    to_session.set(id, 'command', 'from');
+                    rtm.sendMessage('You must have to apply leave for more than one day !', dm.id);
+                }
+            }
         }
-    }
-
+    });
 };
