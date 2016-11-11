@@ -13,16 +13,24 @@ exports._apply = function (message, dm, id, date, time, rtm, user, callback) {
             rtm.sendMessage(user.name + '!' + ' can you please provide me the details \n from (DD-MM-YYYY) ', dm.id);
         } else if (check_session) {
             var result = to_session.get(id, 'command');
-            if (result == 'from' && date) {
-                to_session.touch(id);
-                to_session.set(id, 'from', message.text);
-                to_session.set(id, 'command', 'to');
-                rtm.sendMessage('to (DD-MM-YYYY)', dm.id);
-            } else if (result == 'to' && date) {
-                to_session.touch(id);
-                to_session.set(id, 'to', message.text);
-                to_session.set(id, 'command', 'reason');
-                rtm.sendMessage('reason', dm.id);
+            if (result == 'from') {
+                if (date) {
+                    to_session.touch(id);
+                    to_session.set(id, 'from', message.text);
+                    to_session.set(id, 'command', 'to');
+                    rtm.sendMessage('to (DD-MM-YYYY)', dm.id);
+                } else {
+                    rtm.sendMessage('Invalid Date. So please enter a valid date again in proper format from (DD-MM-YYYY)', dm.id);
+                }
+            } else if (result == 'to') {
+                if (date) {
+                    to_session.touch(id);
+                    to_session.set(id, 'to', message.text);
+                    to_session.set(id, 'command', 'reason');
+                    rtm.sendMessage('reason', dm.id);
+                } else {
+                    rtm.sendMessage('Invalid Date. So please enter a valid date again in proper format to (DD-MM-YYYY)', dm.id);
+                }
             } else if (result == 'reason') {
                 var getFrom = to_session.get(id, 'from');
                 var getTo = to_session.get(id, 'to');
@@ -47,14 +55,8 @@ exports._apply = function (message, dm, id, date, time, rtm, user, callback) {
                         }
                     });
                 } else {
+                    to_session.set(id, 'command', 'from');
                     rtm.sendMessage('You must have to apply leave for more than one day !', dm.id);
-                    to_session.destory(id);
-                }
-            } else if (!date) {
-                if (result == 'to') {
-                    rtm.sendMessage('Invalid Date. So please enter a valid date again in proper format to (DD-MM-YYYY)', dm.id);
-                } else if (result == 'from') {
-                    rtm.sendMessage('Invalid Date. So please enter a valid date again in proper format from (DD-MM-YYYY)', dm.id);
                 }
             }
         }
