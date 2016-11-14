@@ -3,6 +3,7 @@ var moment = require('moment');
 var router = express.Router();
 const leave_status = require('../service/leave/status');
 var leave = require('../service/leave/apply');
+var cancel_leave = require('../service/leave/cancel');
 require('node-import');
 imports('config/index');
 var RtmClient = require('@slack/client').RtmClient;
@@ -46,6 +47,9 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
         rtm.sendMessage('These are the different options for you: \n 1. leave', dm.id);
     } else if (message.text == 'status') {
         leave_status.fetch(message, dm, rtm, function (req, response, msg) {
+        });
+    } else if (message.text == 'cancel') {
+        cancel_leave.cancel(message, dm, rtm, function (req, response, msg) {
         });
     } else if (message.text == 'apply' || date == true || date == false) {
         var id = message.user;
