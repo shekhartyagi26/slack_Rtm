@@ -49,9 +49,11 @@ exports._apply = function (message, dm, id, date, time, rtm, user, callback) {
                         if (status == 0) {
                             to_session.destory(id);
                             rtm.sendMessage('Your leave has been submitted approval!', dm.id);
+                            callback(0);
                         } else {
                             to_session.destory(id);
                             rtm.sendMessage('Oops! Some problem occurred. We are looking into it. In the mean time you can use HR system to apply your leave', dm.id);
+                            callback(0);
                         }
                     });
                 } else {
