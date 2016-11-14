@@ -1,11 +1,12 @@
+require('node-import');
+imports('config/index');
+
 var express = require('express');
 var moment = require('moment');
 var router = express.Router();
 const leave_status = require('../service/leave/status');
 var leave = require('../service/leave/apply');
-var cancel_leave = require('../service/leave/cancel');
-require('node-import');
-imports('config/index');
+var to_session = require('../service/session');
 var RtmClient = require('@slack/client').RtmClient;
 var MemoryDataStore = require('@slack/client').MemoryDataStore;
 var CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS;
@@ -17,6 +18,8 @@ var rtm = new RtmClient(token, {
 });
 
 rtm.start();
+
+var p = 0;
 
 // Wait for the client to connect
 rtm.on(CLIENT_EVENTS.RTM.RTM_CONNECTION_OPENED, function () {
@@ -39,22 +42,29 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
     }
     var dateFormat = "DD-MM-YYYY";
     var date = moment(message.text, dateFormat, true).isValid();
-    if (message.text == 'hello' || message.text == 'hi' || message.text == 'helo' || message.text == 'hey') {
+    console.log(p + "::::: msg");
+    if (p == 0) {
+        to_session.start(id, time);
+    }
+    to_session.set(id, 'command', message.text);
+    var result = to_session.get(id, 'command');
+    if (result == 'hello' || result == 'hi' || result == 'helo' || result == 'hey') {
         rtm.sendMessage('hello ' + user.name + '!', dm.id);
-    } else if (message.text == 'leave') {
+    } else if (result == 'leave') {
         rtm.sendMessage('These are the different options for you: \n 1. apply \n 2. status', dm.id);
-    } else if (message.text == 'help') {
+    } else if (result == 'help') {
         rtm.sendMessage('These are the different options for you: \n 1. leave', dm.id);
-    } else if (message.text == 'status') {
+    } else if (result == 'status' || p == 1) {
+        p = 1;
         leave_status.fetch(message, dm, rtm, function (req, response, msg) {
         });
-    } else if (message.text == 'cancel') {
-        cancel_leave.cancel(message, dm, rtm, function (req, response, msg) {
-        });
-    } else if (message.text == 'apply' || date == true || date == false) {
+    } else if (result == 'apply' || p == 2) {
+        p = 2;
         var id = message.user;
-        leave._apply(message, dm, id, date, time, rtm, user);
-    } else if (dm && dm.id) {
+        leave._apply(message, dm, id, date, time, rtm, user, function (response) {
+            p = response * 1;
+        });
+    } else {
         rtm.sendMessage("I don't understand" + " " + message.text + ". " + "Please use 'help' to see all options" + '.', dm.id);
     }
 });
